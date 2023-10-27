@@ -2,9 +2,10 @@
 
 In this project, you can find the information related to the configuration of a web server with Nginx and PhP for Wordpress.
 
-## Requirements
+## Docker
 
-- Docker
+###  Requirements
+
 - Docker Compose
 - Linux or MacOs
 
@@ -32,3 +33,78 @@ docker compose up --env-file .env -d
 ```
 
 3. See the result in `http://localhost:3000`
+
+## Virtual Machine (Alma Linux)
+
+### Requirements
+
+- A virtual machine with Alma Linux installed, and wget, vim, unzip and tar installed.
+
+1. Install httpd
+
+    ```bash
+    sudo dnf install nginx -y
+    ```
+
+2. Install PHP extensions
+
+    ```bash
+    sudo dnf install php php-mysqlnd php-fpm php-gd php-xml php-mbstring php-json php-opcache php-zip php-curl -y
+    ```
+
+3. Install Wordpress on `/usr/share/nginx/html` and move the contents to the root directory
+
+    ```bash
+    cd /usr/share/nginx/html
+    sudo wget https://wordpress.org/latest.tar.gz
+    sudo tar -xvzf latest.tar.gz
+    sudo mv wordpress/* /usr/share/nginx/html
+    ```
+
+4. Remove unnecessary files
+
+    ```bash
+    sudo rm -rf wordpress latest.tar.gz
+    ```
+
+4. Copy the wp-config-sample.php file to wp-config.php
+
+    ```bash
+    sudo cp /usr/share/nginx/html/wp-config-sample.php /usr/share/nginx/html/wp-config.php
+    ```
+
+5. Update the database name, username, and password in the wp-config.php file
+6. Verify if the file is present, otherwise create and add the following config for the server to read PHP files
+
+- `/etc/nginx/conf.d/php-fpm.conf`
+
+```conf
+upstream php-fpm {
+  server unix:/run/php-fpm/www.sock;
+}
+```
+
+1. Update the firewall rules
+
+    ```bash
+    sudo firewall-cmd --permanent --add-service=http
+    sudo firewall-cmd --permanent --add-service=https
+    sudo firewall-cmd --reload
+    ```
+
+2. Start and enable the httpd and php-fpm services
+
+    ```bash
+    sudo systemctl start nginx
+    sudo systemctl enable nginx
+    sudo systemctl start php-fpm
+    sudo systemctl enable php-fpm
+    ```
+
+3.  Set SELinux to permissive mode
+
+    ```bash
+    sudo setenforce 0
+    ```
+
+4.  Open the browser and navigate to `http://<IP_ADDRESS>`
